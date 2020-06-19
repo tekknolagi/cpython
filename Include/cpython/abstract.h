@@ -327,9 +327,11 @@ PyAPI_FUNC(void) PyBuffer_Release(Py_buffer *view);
 
 /* ==== Iterators ================================================ */
 
+#ifndef Py_LIMITED_API
 #define PyIter_Check(obj) \
     (Py_TYPE(obj)->tp_iternext != NULL && \
      Py_TYPE(obj)->tp_iternext != &_PyObject_NextNotImplemented)
+#endif
 
 /* === Sequence protocol ================================================ */
 

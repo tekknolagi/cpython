@@ -769,5 +769,40 @@ Py_BytesMain(int argc, char **argv)
         .use_bytes_argv = 1,
         .bytes_argv = argv,
         .wchar_argv = NULL};
+    // print all the args
+    printf("argc: %d\n", argc);
+    for (int i = 0; i < argc; i++) {
+        printf("hello i am an arg %s\n", argv[i]);
+    }
     return pymain_main(&args);
 }
+
+#ifdef __WASM__
+static void wizer_init() {
+    int argc = 1;
+    char *argv[] = {"python.wasm"};
+    _PyArgv args = {
+        .argc = argc,
+        .use_bytes_argv = 1,
+        .bytes_argv = argv,
+        .wchar_argv = NULL};
+    PyStatus status = pymain_init(&args);
+    if (_PyStatus_IS_EXIT(status)) {
+        pymain_free();
+        return;
+    }
+    if (_PyStatus_EXCEPTION(status)) {
+        pymain_exit_error(status);
+    }
+    printf("Wizer init!!\n");
+}
+WIZER_INIT(wizer_init);
+
+void wizer_resume();
+void wizer_resume() {
+    Py_RunMain();
+}
+
+#include "wizer.h"
+
+#endif

@@ -6,5 +6,5 @@ wasmtime run --wasm max-wasm-stack=8388608 \
   --dir /home/max/Documents/dev/cpython::/ \
   --dir /home/max/Documents/dev/cpython/builddir/wasi/build/lib.wasi-wasm32-3.14 \
   --env PYTHONPATH=/builddir/wasi/build/lib.wasi-wasm32-3.14:/Lib \
-  builddir/wasi/python.wizer.wasm
-
+  --allow-precompiled \
+  builddir/wasi/python.wizer.cwasm

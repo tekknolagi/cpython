@@ -97,21 +97,6 @@
         __wasm_call_ctors();                                                   \
         /* We now invoke the provided init function before returning.       */ \
         init_func();                                                           \
-    }                                                                          \
-    /* This function replaces `_start` (the WASI-specified entry point) in  */ \
-    /* the pre-initialized Wasm module.                                     */ \
-    __attribute__((export_name("wizer.resume"))) void __wizer_resume() {       \
-        /* `__main_void()` is defined by the WASI SDK toolchain due to      */ \
-        /* special semantics in C/C++ for the `main()` function, i.e., ito  */ \
-        /* can either take argc/argv or not. It collects arguments using    */ \
-        /* the appropriate WASI calls and then invokes the user program's   */ \
-        /* `main()`. This may change in the future; when it does, we will   */ \
-        /* coordinate with the WASI-SDK toolchain to implement this entry   */ \
-        /* point in an alternate way. */                                       \
-        WIZER_MAIN_VOID();                                                     \
-        /* Because we are replacing `_start()`, we need to manually invoke  */ \
-        /* destructors as well.                                             */ \
-        __wasm_call_dtors();                                                   \
     }
 
 /*

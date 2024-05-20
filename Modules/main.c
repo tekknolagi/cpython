@@ -769,16 +769,13 @@ Py_BytesMain(int argc, char **argv)
         .use_bytes_argv = 1,
         .bytes_argv = argv,
         .wchar_argv = NULL};
-    // print all the args
-    printf("argc: %d\n", argc);
-    for (int i = 0; i < argc; i++) {
-        printf("hello i am an arg %s\n", argv[i]);
-    }
     return pymain_main(&args);
 }
 
-#ifdef __WASM__
-static void wizer_init() {
+#ifdef __wasi__
+PyObject* entrypoint = NULL;
+void wizer_init(void);
+void wizer_init(void) {
     int argc = 1;
     char *argv[] = {"python.wasm"};
     _PyArgv args = {
@@ -789,20 +786,58 @@ static void wizer_init() {
     PyStatus status = pymain_init(&args);
     if (_PyStatus_IS_EXIT(status)) {
         pymain_free();
+        abort();
         return;
     }
     if (_PyStatus_EXCEPTION(status)) {
         pymain_exit_error(status);
     }
-    printf("Wizer init!!\n");
+    PyInterpreterState *interp = _PyInterpreterState_GET();
+    PyConfig *config = (PyConfig*)_PyInterpreterState_GetConfig(interp);
+    if (_PyStatus_EXCEPTION(_PyPathConfig_UpdateGlobal(config))) {
+        fprintf(stderr, "failed to update global path config\n");
+        abort();
+    }
+    _PyInterpreterState_SetRunningMain(interp);
+    assert(!PyErr_Occurred());
+    PyObject *main_importer_path = NULL;
+    int exitcode = 0;
+        if (pymain_get_importer(config->run_filename, &main_importer_path,
+                                &exitcode)) {
+            return;
+        }
+    PyObject *path0 = NULL;
+    if (main_importer_path != NULL) {
+        path0 = Py_NewRef(main_importer_path);
+    }
+    else if (!config->safe_path) {
+        int res = _PyPathConfig_ComputeSysPath0(&config->argv, &path0);
+        assert(res >= 0);
+        if (res == 0) {
+            Py_CLEAR(path0);
+        }
+    }
+    if (path0 != NULL) {
+        wchar_t *wstr = PyUnicode_AsWideCharString(path0, NULL);
+        assert(wstr != NULL);
+        config->sys_path_0 = _PyMem_RawWcsdup(wstr);
+        PyMem_Free(wstr);
+        assert(config->sys_path_0 != NULL);
+        int res = pymain_sys_path_add_path0(interp, path0);
+        Py_DECREF(path0);
+        assert(res >= 0);
+    }
+
+    PyObject* mainmodule = PyImport_ImportModule("foo");
+    entrypoint = PyObject_GetAttrString(mainmodule, "main");
+    assert(entrypoint);
 }
+#include "wizer.h"
 WIZER_INIT(wizer_init);
 
-void wizer_resume();
-void wizer_resume() {
-    Py_RunMain();
+__attribute__((export_name("wizer_resume")))
+void wizer_resume(void) {
+    PyObject_CallObject(entrypoint, NULL);
+    __wasm_call_dtors();
 }
-
-#include "wizer.h"
-
 #endif

@@ -12,10 +12,6 @@ wizer -r _start=wizer_resume \
   --wasm-bulk-memory true \
   -o builddir/wasi/python.wizer.wasm \
   builddir/wasi/python.wasm
-  # > /dev/null
-
-  # -r _start=wizer_resume \
-  # --inherit-env true \
 
 wasmtime compile \
   -o builddir/wasi/python.wizer.cwasm \

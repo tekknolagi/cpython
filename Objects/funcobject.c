@@ -7,7 +7,6 @@
 #include "pycore_object.h"        // _PyObject_GC_UNTRACK()
 #include "pycore_pyerrors.h"      // _PyErr_Occurred()
 
-
 static const char *
 func_event_name(PyFunction_WatchEvent event) {
     switch (event) {
@@ -126,6 +125,8 @@ _PyFunction_FromConstructor(PyFrameConstructor *constr)
     op->func_annotations = NULL;
     op->func_typeparams = NULL;
     op->vectorcall = _PyFunction_Vectorcall;
+    op->func_weval_specialized = NULL;
+    op->func_weval_req = NULL;
     op->func_version = 0;
     // NOTE: functions created via FrameConstructor do not use deferred
     // reference counting because they are typically not part of cycles
@@ -204,6 +205,8 @@ PyFunction_NewWithQualName(PyObject *code, PyObject *globals, PyObject *qualname
     op->func_annotations = NULL;
     op->func_typeparams = NULL;
     op->vectorcall = _PyFunction_Vectorcall;
+    op->func_weval_specialized = NULL;
+    op->func_weval_req = NULL;
     op->func_version = 0;
     if ((code_obj->co_flags & CO_NESTED) == 0) {
         // Use deferred reference counting for top-level functions, but not
@@ -983,6 +986,8 @@ func_clear(PyFunctionObject *op)
     return 0;
 }
 
+void my_weval_free(void* ptr);
+
 static void
 func_dealloc(PyFunctionObject *op)
 {
@@ -1004,6 +1009,7 @@ func_dealloc(PyFunctionObject *op)
     Py_DECREF(op->func_code);
     Py_DECREF(op->func_name);
     Py_DECREF(op->func_qualname);
+    my_weval_free(op->func_weval_req);
     PyObject_GC_Del(op);
 }
 

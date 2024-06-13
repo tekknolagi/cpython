@@ -1790,6 +1790,8 @@ error:
     return NULL;
 }
 
+typedef PyObject *eval_func(PyThreadState *, _PyInterpreterFrame *, int);
+
 PyObject *
 _PyEval_Vector(PyThreadState *tstate, PyFunctionObject *func,
                PyObject *locals,
@@ -1813,6 +1815,9 @@ _PyEval_Vector(PyThreadState *tstate, PyFunctionObject *func,
         tstate, func, locals, args, argcount, kwnames);
     if (frame == NULL) {
         return NULL;
+    }
+    if (func->func_weval_specialized != NULL) {
+        return ((eval_func*)func->func_weval_specialized)(tstate, frame, 0);
     }
     EVAL_CALL_STAT_INC(EVAL_CALL_VECTOR);
     return _PyEval_EvalFrame(tstate, frame, 0);

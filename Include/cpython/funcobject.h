@@ -43,6 +43,8 @@ typedef struct {
     PyObject *func_annotations; /* Annotations, a dict or NULL */
     PyObject *func_typeparams;  /* Tuple of active type variables or NULL */
     vectorcallfunc vectorcall;
+    void *func_weval_specialized;
+    void *func_weval_req;
     /* Version number for use by specializer.
      * Can set to non-zero when we want to specialize.
      * Will be set to zero if any of these change:

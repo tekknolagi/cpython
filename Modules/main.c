@@ -772,6 +772,16 @@ Py_BytesMain(int argc, char **argv)
     return pymain_main(&args);
 }
 
+#include "weval.h"
+WEVAL_DEFINE_GLOBALS()
+
+void my_weval_free(void* ptr) {
+    if (ptr == NULL) {
+        return;
+    }
+    weval_free((weval_req_t*)ptr);
+}
+
 #ifdef __wasi__
 PyObject* entrypoint = NULL;
 void wizer_init(void);
